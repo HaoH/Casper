@@ -88,5 +88,9 @@
                 "width": 2000
             }
         }
+    },
+    "dependencies": {
+        "leancloud-storage": "^4.5.3",
+        "valine": "^1.3.10"
     }
 }

@@ -1853,8 +1853,20 @@ Usage (In Ghost editor):
 .post-full-comments {
     margin: 0 auto;
     max-width: 840px;
+    padding: 0 170px 6vw;
 }
 
+@media (max-width: 1170px) {
+    .post-full-comments{
+        padding: 0 11vw;
+    }
+}
+@media (max-width: 800px) {
+    .post-full-comments {
+        padding: 0 5vw;
+        font-size: 1.8rem;
+    }
+}
 
 /* 7.4. Related posts
 /* ---------------------------------------------------------- */
