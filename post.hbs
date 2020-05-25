@@ -10,6 +10,11 @@ into the {body} of the default.hbs template --}}
 {{!-- Everything inside the #post tags pulls data from the post --}}
 {{#post}}
 
+<!-- 添加目录 -->
+<aside class="toc-container">
+    <div class="toc"></div>
+</aside>
+
 <main id="site-main" class="site-main outer">
     <div class="inner">
 
@@ -110,10 +115,6 @@ into the {body} of the default.hbs template --}}
 
             <section class="post-full-content">
 
-                <!-- 添加目录 -->
-                <aside class="toc-container">
-                    <div class="toc"></div>
-                </aside>
 
                 <div class="post-content">
                     {{content}}

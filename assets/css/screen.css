@@ -3090,11 +3090,26 @@ Usage (In Ghost editor):
     }
 }
 
-/* toc
- */
+/* toc */
+.toc-container {
+    position: fixed;
+    bottom: 15px;
+    max-width: calc(50% - 450px - 40px);
+    font-size: 80%;
+    z-index: 999;
+    /* background: white; */
+    /* color: rgba(0,0,0,.5); */
+    padding: 0 10px 10px;
+    border-radius: 0 3px 3px 0;
+    box-sizing: border-box;
+    background: #191b1f;
+}
+
 /* Offset headings from fixed header */
+.post-content h1::before,
 .post-content h2::before,
-.post-content h3::before {
+.post-content h3::before,
+.post-content h4::before {
     display: block;
     content: " ";
     height: 84px;
@@ -3127,4 +3142,3 @@ figure.kg-width-full img {
 .post-full-content pre {
     max-width: 0;
 }
-
