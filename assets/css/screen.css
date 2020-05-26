@@ -3142,3 +3142,9 @@ figure.kg-width-full img {
 .post-full-content pre {
     max-width: 0;
 }
+
+
+/*search*/
+.no-scroll-y {
+    overflow-y: hidden;
+}

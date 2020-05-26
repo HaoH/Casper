@@ -15,6 +15,24 @@
     <link rel="stylesheet" type="text/css" href="{{asset "built/tocbot.css"}}" />
 
     <link rel="stylesheet" type="text/css" href="{{asset "built/screen.css"}}" />
+
+    <style>
+        /* This font-face is here to make icons work if the Ghost instance is installed in a subdirectory */
+        @font-face {
+            font-family: 'icomoon';
+            src: url("{{asset 'built/fonts/icomoon.eot?vukg2s'}}");
+            src: url("{{asset 'built/fonts/icomoon.eot?vukg2s#iefix'}}") format('embedded-opentype'),
+            url("{{asset 'built/fonts/icomoon.ttf?vukg2s'}}") format('truetype'),
+            url("{{asset 'built/fonts/icomoon.woff?vukg2s'}}") format('woff'),
+            url("{{asset 'built/fonts/icomoon.svg?vukg2s#icomoon'}}") format('svg');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+    </style>
+
+    <link rel="stylesheet" type="text/css" href="{{asset "built/search.css"}}" />
+
     {{!-- This tag outputs SEO meta+structured data and other important settings --}}
     {{ghost_head}}
 
@@ -25,6 +43,9 @@
 
         {{!-- All the main content gets inserted here, index.hbs, post.hbs, etc --}}
         {{{body}}}
+
+        {{!-- Search form --}}
+        {{> search}}
 
         {{!-- The footer at the very bottom of the screen --}}
         <footer class="site-footer outer">
@@ -120,6 +141,202 @@
 
     {{!-- The #block helper will pull in data from the #contentFor other template files. In this case, there's some JavaScript which we only want to use in post.hbs, but it needs to be included down here, after jQuery has already loaded. --}}
     {{{block "scripts"}}}
+
+    <script>
+        function formatDate(date) {
+            if (date) {
+                return new Date(date).toLocaleDateString(
+                    document.documentElement.lang,
+                    {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    }
+                )
+            }
+
+            return ''
+        }
+
+        $(document).ready(() => {
+            const $body = $('body')
+            const $openSearch = $('.js-open-search')
+            const $closeSearch = $('.js-close-search')
+            const $search = $('.js-search')
+            const $inputSearch = $('.js-input-search')
+            const $searchResults = $('.js-search-results')
+            const $searchNoResults = $('.js-no-results')
+
+            //let fuse = null
+            let flexIndexZh = null
+            let flexIndexEn = null
+
+            function trySearchFeature() {
+                if (typeof ghostSearchApiKey !== 'undefined' && typeof ghostHost !== 'undefined') {
+                    getAllPosts(ghostHost, ghostSearchApiKey)
+                } else {
+                    $openSearch.css('visibility', 'hidden')
+                    $closeSearch.remove()
+                    $search.remove()
+                }
+            }
+
+            function toggleScrollVertical() {
+                $body.toggleClass('no-scroll-y')
+            }
+
+            function getAllPosts(host, key) {
+                const api = new GhostContentAPI({
+                    url: host,
+                    key,
+                    version: 'v2'
+                })
+                const allPosts = []
+                /*
+                const fuseOptions = {
+                    shouldSort: true,
+                    threshold: 0,
+                    location: 0,
+                    distance: 100,
+                    tokenize: true,
+                    matchAllTokens: false,
+                    maxPatternLength: 32,
+                    minMatchCharLength: 1,
+                    keys: ['title', 'custom_excerpt', 'html']
+                }
+                */
+                const docOption = {
+                    doc: {
+                        id: "id",
+                        field: [
+                            "title",
+                            "html",
+                            "custom_excerpt"
+                        ]
+                    }
+                }
+                const flexOptionsZh = {
+                    encode: false,
+                    tokenize: function(str){
+                        return str.replace(/[\x00-\x7F]/g, "").split("");
+                    }
+                }
+
+                const flexOptionsEn = {
+                    encode: 'advanced',
+                    tokenize: 'forward'
+                }
+
+                api.posts.browse({
+                    limit: 'all',
+                    fields: 'id, title, url, published_at, custom_excerpt, html'
+                })
+                    .then((posts) => {
+                        for (var i = 0, len = posts.length; i < len; i++) {
+                            allPosts.push(posts[i])
+                        }
+
+                        //fuse = new Fuse(allPosts, fuseOptions)
+
+                        flexIndexZh = new FlexSearch(Object.assign({}, flexOptionsZh, docOption))
+                        flexIndexZh.add(allPosts)
+
+                        flexIndexEn = new FlexSearch(Object.assign({}, flexOptionsEn, docOption))
+                        flexIndexEn.add(allPosts)
+                    })
+                    .catch((err) => {
+                        console.log(err)
+                    })
+
+            }
+
+            $openSearch.click(() => {
+                $search.addClass('opened')
+                setTimeout(() => {
+                    $inputSearch.focus()
+                }, 400);
+                toggleScrollVertical()
+            })
+
+            $closeSearch.click(() => {
+                $inputSearch.blur()
+                $search.removeClass('opened')
+                toggleScrollVertical()
+            })
+/*
+            $inputSearch.keyup(() => {
+                if ($inputSearch.val().length > 0 && fuse) {
+                    const results = fuse.search($inputSearch.val())
+                    let htmlString = ''
+
+                    if (results.length > 0) {
+                        for (var i = 0, len = results.length; i < len; i++) {
+                            htmlString += `
+          <article class="m-result">\
+            <a href="${results[i].item.url}" class="m-result__link">\
+              <h3 class="m-result__title">${results[i].item.title}</h3>\
+              <span class="m-result__date">${formatDate(results[i].item.published_at)}</span>\
+            </a>\
+          </article>`
+                        }
+
+                        $searchNoResults.hide()
+                        $searchResults.html(htmlString)
+                        $searchResults.show()
+                    } else {
+                        $searchResults.html('')
+                        $searchResults.hide()
+                        $searchNoResults.show()
+                    }
+                } else {
+                    $searchResults.html('')
+                    $searchResults.hide()
+                    $searchNoResults.hide()
+                }
+            })
+            */
+
+            $inputSearch.keyup(() => {
+                if ($inputSearch.val().length > 0 && flexIndexEn && flexIndexZh) {
+                    const resultsZh = flexIndexZh.search($inputSearch.val())
+                    const resultsEn = flexIndexEn.search($inputSearch.val())
+
+                    const results = resultsZh.concat(resultsEn)
+                    let htmlString = ''
+
+                    if (results.length > 0) {
+                        let duplicate_ids = []
+                        for (var i = 0, len = results.length; i < len; i++) {
+                            if (results[i].id in duplicate_ids)
+                                continue
+                            htmlString += `
+          <article class="m-result">\
+            <a href="${results[i].url}" class="m-result__link">\
+              <h3 class="m-result__title">${results[i].title}</h3>\
+              <span class="m-result__date">${formatDate(results[i].published_at)}</span>\
+            </a>\
+          </article>`
+                            duplicate_ids.push(results[i].id)
+                        }
+
+                        $searchNoResults.hide()
+                        $searchResults.html(htmlString)
+                        $searchResults.show()
+                    } else {
+                        $searchResults.html('')
+                        $searchResults.hide()
+                        $searchNoResults.show()
+                    }
+                } else {
+                    $searchResults.html('')
+                    $searchResults.hide()
+                    $searchNoResults.hide()
+                }
+            })
+
+            trySearchFeature()
+        })
+    </script>
 
     {{!-- Ghost outputs important scripts and data with this tag - it should always be the very last thing before the closing body tag --}}
     {{ghost_foot}}

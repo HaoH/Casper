@@ -74,6 +74,14 @@ function js(done) {
     ], handleError(done));
 }
 
+function fonts(done) {
+    pump([
+        src(['assets/fonts/icomoon/*']),
+        dest('assets/built/fonts/', {sourcemaps: '.'}),
+        livereload()
+    ], handleError(done));
+}
+
 function zipper(done) {
     const filename = require('./package.json').name + '.zip';
 
@@ -90,8 +98,9 @@ function zipper(done) {
 
 const cssWatcher = () => watch('assets/css/**', css);
 const hbsWatcher = () => watch(['*.hbs', 'partials/**/*.hbs'], hbs);
-const watcher = parallel(cssWatcher, hbsWatcher);
-const build = series(css, js);
+const fontsWatcher = () => watch(['assets/fonts/icomoon*'], fonts);
+const watcher = parallel(cssWatcher, hbsWatcher, fontsWatcher);
+const build = series(css, js, fonts);
 
 exports.build = build;
 exports.zip = series(build, zipper);
